@@ -78,10 +78,17 @@ of it ever reaches the main conversation.
 ## Design
 
 - one lazily-created in-memory `AgentSession` sub-session per pi session
-  (`SessionManager.inMemory()`, nothing on disk), seeded with the main
-  session's messages via `buildSessionContext`
+  (`SessionManager.inMemory()`, nothing on disk), seeded by writing the main
+  session's messages (`buildSessionContext` + `convertToLlm`) into the
+  sub-session journal before creation — `createAgentSession` restores them
+  through its own path, so they also survive compaction rebuilds
 - tool whitelist `["read", "grep", "find", "ls"]` — no bash, no edit, no write
 - model and thinking level inherit the main session and re-sync before every ask
+- the system prompt is composed fresh by the sub-session from the main
+  session's raw `customPrompt` and `appendSystemPrompt` (via
+  `getSystemPromptOptions()`) plus the btw role prompt; context files and
+  skills load from disk at first `/btw`, and the tools section lists exactly
+  the four read-only tools
 - the system prompt tells the side agent exactly what it is: temporary,
   read-only, never promises actions
 

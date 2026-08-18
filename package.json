@@ -1,6 +1,6 @@
 {
 	"name": "@lanlance/pi-btw",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Claude Code-style /btw side questions for pi: read-only sub-session answers in a floating overlay while the main agent keeps running",
 	"type": "module",
 	"license": "Apache-2.0",

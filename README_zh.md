@@ -56,9 +56,10 @@ pi -e /path/to/pi-btw
 
 ## 设计
 
-- 每次 pi 会话懒创建一个 in-memory `AgentSession` 子会话（`SessionManager.inMemory()`，不落盘），种子为主会话 branch 的真实 messages
+- 每次 pi 会话懒创建一个 in-memory `AgentSession` 子会话（`SessionManager.inMemory()`，不落盘）；主会话 messages（`buildSessionContext` + `convertToLlm`）先写入子会话 journal 再创建，由 `createAgentSession` 的官方恢复路径装载，compaction 重建后也不会丢
 - 子会话工具白名单 `["read", "grep", "find", "ls"]`，无 bash / edit / write
 - 模型与 thinking level 继承主会话，每次提问前同步
+- system prompt 由子会话重新组装：取主会话原始 `customPrompt` 与 `appendSystemPrompt`（经 `getSystemPromptOptions()`）叠加 btw 角色提示；AGENTS.md / skills 首次 `/btw` 时从磁盘加载，工具段正确列出 4 个只读工具
 - system prompt 明确声明：只读的临时 side agent，主 agent 未被打断，只回答，不承诺任何修改
 
 License: Apache-2.0

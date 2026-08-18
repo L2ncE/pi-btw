@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-08-18
+
+### Fixed
+
+- Side-session seeding no longer writes `agent.state.messages` directly: the
+  main conversation is written into the in-memory journal first, so pi's own
+  restore path loads it and compaction rebuilds no longer silently drop it.
+
+### Changed
+
+- Side-session system prompt is composed from the main session's raw
+  `customPrompt` / `appendSystemPrompt` via `getSystemPromptOptions()` instead
+  of regex-stripping the composed prompt; the tools section now correctly
+  lists the four read-only tools, and context files / skills load from disk
+  at first `/btw`.
+
 ## [0.1.0] - 2026-08-18
 
 ### Added

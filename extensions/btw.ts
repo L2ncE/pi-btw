@@ -1,6 +1,7 @@
 import { contentText } from "@earendil-works/pi-ai";
 import {
 	buildSessionContext,
+	convertToLlm,
 	copyToClipboard,
 	createAgentSession,
 	DefaultResourceLoader,
@@ -83,31 +84,23 @@ interface OverlayHandleLike {
 	hide(): void;
 }
 
-/**
- * Strip the dynamic footer (date/cwd) pi appends to the live system prompt so
- * the seeded sub-session gets a stable base prompt. The footer text lives in
- * pi's runtime prompt template, not the SDK; if pi changes it, the worst case
- * is a stale date in the side agent's prompt.
- */
-function stableSystemPrompt(systemPrompt: string): string {
-	return systemPrompt
-		.replace(/\nCurrent date and time:[^\n]*(\nCurrent working directory:[^\n]*)?$/u, "")
-		.replace(/\nCurrent working directory:[^\n]*$/u, "")
-		.trim();
-}
-
 function createBtwResourceLoader(ctx: ExtensionCommandContext): ResourceLoader {
+	const promptOptions = ctx.getSystemPromptOptions();
 	return new DefaultResourceLoader({
-		cwd: process.cwd(),
+		cwd: ctx.cwd,
 		agentDir: getAgentDir(),
 		noExtensions: true,
-		noSkills: true,
 		noPromptTemplates: true,
 		noThemes: true,
-		noContextFiles: true,
-		// The main session's composed prompt already includes context files.
-		systemPrompt: stableSystemPrompt(ctx.getSystemPrompt() ?? ""),
-		appendSystemPrompt: [BTW_SYSTEM_PROMPT],
+		// customPrompt is the raw prompt text: the dynamic footer is appended fresh by
+		// the sub-session's own buildSystemPrompt, so no string surgery is needed.
+		// Context files and skills load from disk like a normal session in this cwd.
+		systemPrompt: promptOptions.customPrompt,
+		appendSystemPrompt: [
+			// Keep the main session's appended prompt so project rules are not silently lost.
+			...(promptOptions.appendSystemPrompt ? [promptOptions.appendSystemPrompt] : []),
+			BTW_SYSTEM_PROMPT,
+		],
 	});
 }
 
@@ -164,21 +157,23 @@ export default function btw(pi: ExtensionAPI) {
 		}
 		const resourceLoader = createBtwResourceLoader(ctx);
 		await resourceLoader.reload();
+		// Seed the journal, not agent state: createAgentSession restores messages from a
+		// non-empty session manager itself, and compaction rebuilds re-read the journal —
+		// a state-only seed would be silently dropped on the first compaction.
+		// convertToLlm projects AgentMessage[] (incl. compaction/branch summaries) onto
+		// the plain message roles appendMessage accepts.
+		const sessionManager = SessionManager.inMemory(ctx.cwd);
+		const seed = convertToLlm(
+			buildSessionContext(ctx.sessionManager.getEntries(), ctx.sessionManager.getLeafId()).messages,
+		);
+		for (const message of seed) sessionManager.appendMessage(message);
 		const { session } = await createAgentSession({
 			model: ctx.model,
 			thinkingLevel: pi.getThinkingLevel(),
 			tools: ["read", "grep", "find", "ls"],
-			sessionManager: SessionManager.inMemory(),
+			sessionManager,
 			resourceLoader,
 		});
-		// The SDK has no initialMessages option; direct state seeding is the supported-by-necessity route.
-		const seed = buildSessionContext(
-			ctx.sessionManager.getEntries(),
-			ctx.sessionManager.getLeafId(),
-		).messages;
-		if (seed.length > 0) {
-			session.agent.state.messages = seed;
-		}
 		subSession = session;
 		return session;
 	}
