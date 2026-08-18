@@ -1,0 +1,39 @@
+{
+	"name": "@lanlance/pi-btw",
+	"version": "0.1.0",
+	"description": "Claude Code-style /btw side questions for pi: read-only sub-session answers in a floating overlay while the main agent keeps running",
+	"type": "module",
+	"license": "Apache-2.0",
+	"keywords": [
+		"pi-package",
+		"pi",
+		"pi-coding-agent",
+		"btw",
+		"side-question"
+	],
+	"files": [
+		"extensions/**/*.ts",
+		"README.md",
+		"LICENSE"
+	],
+	"pi": {
+		"extensions": [
+			"./extensions/btw.ts"
+		]
+	},
+	"devDependencies": {
+		"@earendil-works/pi-ai": "^0.84.1",
+		"@earendil-works/pi-coding-agent": "^0.84.1",
+		"@earendil-works/pi-tui": "^0.84.1",
+		"typescript": "^7.0.2"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "^0.84.1",
+		"@earendil-works/pi-coding-agent": "^0.84.1",
+		"@earendil-works/pi-tui": "^0.84.1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/L2ncE/pi-btw.git"
+	}
+}
