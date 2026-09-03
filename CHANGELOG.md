@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The IME pre-edit string and candidate window no longer drift away from the
+  `/btw` overlay input on terminals that anchor IME to the hardware cursor
+  (e.g. Windows Terminal + WSL). The embedded input is now rendered with the
+  overlay's real focus state, so pi-tui receives its `CURSOR_MARKER` and can
+  position the hardware cursor on the overlay input row while typing.
+
 ## [0.1.1] - 2026-08-18
 
 ### Fixed

@@ -523,8 +523,13 @@ class BtwOverlayComponent implements Component, Focusable {
 	private inputFrameLine(innerWidth: number): string {
 		const targetWidth = Math.max(1, innerWidth);
 		const previousFocused = this.input.focused;
-		// Render the embedded input unfocused: the emitted cursor marker skews the row.
-		this.input.focused = false;
+		// Render the embedded input with the overlay's real focus state. While
+		// focused, the Input emits the zero-width CURSOR_MARKER so pi-tui positions
+		// the hardware cursor (and with it the IME pre-edit / candidate window) on
+		// this row. Forcing focused=false here suppresses the marker, leaving the
+		// hardware cursor parked at the end of the last written line, which makes
+		// the IME popup drift around the screen on terminals like Windows Terminal.
+		this.input.focused = this.focused;
 		try {
 			const rendered = this.input.render(targetWidth)[0] ?? "";
 			const line = truncateToWidth(rendered, targetWidth, "");
